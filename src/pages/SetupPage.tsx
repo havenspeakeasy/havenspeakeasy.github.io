@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Wine, Database, CheckCircle, XCircle, Loader, RefreshCw, Key } from "lucide-react";
 
@@ -30,6 +30,11 @@ export default function SetupPage() {
   const [seeding, setSeeding] = useState(false);
   const [seedDone, setSeedDone] = useState(false);
   const [employeeRows, setEmployeeRows] = useState<any[]>([]);
+
+  // Auto-run diagnostics on mount
+  useEffect(() => {
+    runDiagnostics();
+  }, []);
 
   const runDiagnostics = async () => {
     setRunning(true);
@@ -101,6 +106,10 @@ export default function SetupPage() {
     setRunning(false);
   };
 
+  // Auto-run diagnostics on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { runDiagnostics(); }, []);
+
   const seedDatabase = async () => {
     setSeeding(true);
     const errors: string[] = [];
@@ -118,6 +127,7 @@ export default function SetupPage() {
     }
 
     if (errors.length > 0) {
+      console.error("Seeding errors:", errors);
       alert("Some errors during seeding:\n" + errors.join("\n"));
     } else {
       setSeedDone(true);
@@ -129,6 +139,7 @@ export default function SetupPage() {
   };
 
   const allOk = results.length > 0 && results.every(r => r.status === "ok");
+  const needsSeeding = results.length > 0 && employeeRows.length === 0 && !seeding && !seedDone;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--dark-900)", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
@@ -168,6 +179,17 @@ export default function SetupPage() {
               {seeding ? "Seeding..." : seedDone ? "Seeded!" : "Seed Database"}
             </button>
           </div>
+
+          {/* Needs Seeding Prompt */}
+          {needsSeeding && (
+            <div style={{ padding: "1rem", background: "rgba(234,179,8,0.07)", border: "1px solid rgba(234,179,8,0.25)", borderRadius: 8, marginBottom: "1rem", display: "flex", alignItems: "center", gap: 12 }}>
+              <RefreshCw size={18} style={{ color: "#facc15", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ color: "#facc15", fontSize: "0.85rem", fontWeight: 600, marginBottom: 2 }}>Database is empty — seeding required</p>
+                <p style={{ color: "var(--cream-muted, #9b8f7e)", fontSize: "0.78rem" }}>Click <strong style={{ color: "#e8d5a3" }}>Seed Database</strong> above to create the default staff accounts.</p>
+              </div>
+            </div>
+          )}
 
           {/* Results */}
           {results.length > 0 && (
