@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
-  LayoutDashboard, Users, Clock, ClipboardList,
+  LayoutDashboard, Users, Clock, ClipboardList, Package,
   LogOut, Wine, ChevronRight, AlertTriangle, Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/manage-shifts", label: "Manage Shifts", icon: ClipboardList, ownerOnly: true, managerOnly: false },
   { to: "/manage-injuries", label: "Injury Reports", icon: AlertTriangle, ownerOnly: true, managerOnly: false },
   { to: "/job-titles", label: "Job Titles", icon: Briefcase, ownerOnly: true, managerOnly: false },
+  { to: "/stock", label: "Stock Management", icon: Package, ownerOnly: true, managerOnly: false },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

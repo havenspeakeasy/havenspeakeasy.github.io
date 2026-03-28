@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getEmployees, getShifts, formatMoney, formatDuration } from "@/lib/store";
 import { useAuth } from "@/context/AuthContext";
 import { Users, Clock, DollarSign, CheckCircle, TrendingUp, AlertCircle } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import StoreEarningsOverview from "@/components/StoreEarningsOverview";
+
+type Period = "week" | "month" | "all";
 
 function getWeekStart() {
   const d = new Date();
@@ -12,26 +15,41 @@ function getWeekStart() {
   return d;
 }
 
+function getMonthStart() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(1);
+  return d;
+}
+
 export default function Dashboard() {
   const { user, isOwnerOrManager } = useAuth();
+  const [period, setPeriod] = useState<Period>("week");
 
   const { data: employees = [] } = useQuery({ queryKey: ["employees"], queryFn: getEmployees });
   const { data: shifts = [] } = useQuery({ queryKey: ["shifts"], queryFn: getShifts });
 
   const weekStart = getWeekStart();
+  const monthStart = getMonthStart();
 
   const myShifts = shifts.filter(s => s.employeeId === user?.id);
   const activeEmployees = employees.filter(e => e.isActive);
 
-  // Weekly filters
-  const weekShifts = shifts.filter(s => s.clockOut !== null && new Date(s.clockOut!) >= weekStart);
-  const approvedWeekShifts = weekShifts.filter(s => s.status === "approved");
-  const pendingWeekShifts = weekShifts.filter(s => s.status === "pending");
+  // Period-based filters
+  const periodStart = period === "week" ? weekStart : period === "month" ? monthStart : null;
+  const periodShifts = shifts.filter(s =>
+    s.clockOut !== null && (periodStart === null || new Date(s.clockOut!) >= periodStart)
+  );
+  const approvedPeriodShifts = periodShifts.filter(s => s.status === "approved");
+  const pendingPeriodShifts = periodShifts.filter(s => s.status === "pending");
+  const periodPayroll = approvedPeriodShifts.reduce((sum, s) => sum + (s.earnings ?? 0), 0);
+  const periodPendingPayroll = pendingPeriodShifts.reduce((sum, s) => sum + (s.earnings ?? 0), 0);
 
-  const weekPayroll = approvedWeekShifts.reduce((sum, s) => sum + (s.earnings ?? 0), 0);
-  const weekPendingPayroll = pendingWeekShifts.reduce((sum, s) => sum + (s.earnings ?? 0), 0);
-
-  // All shifts (for table) - removed unused variables
+  const PERIOD_LABELS: Record<Period, string> = {
+    week: "this week",
+    month: "this month",
+    all: "all time",
+  };
 
   const myEarnings = myShifts.filter(s => s.status === "approved").reduce((sum, s) => sum + (s.earnings ?? 0), 0);
   const myHours = myShifts.filter(s => s.status === "approved").reduce((sum, s) => sum + (s.totalMinutes ?? 0), 0);
@@ -52,11 +70,23 @@ export default function Dashboard() {
 
         {isOwnerOrManager ? (
           <>
+            {/* Period Toggle */}
+            <div className="period-toggle-row">
+              {(["week", "month", "all"] as Period[]).map(p => (
+                <button
+                  key={p}
+                  className={`period-toggle-btn ${period === p ? "period-toggle-active" : ""}`}
+                  onClick={() => setPeriod(p)}
+                >
+                  {p === "week" ? "This Week" : p === "month" ? "This Month" : "All Time"}
+                </button>
+              ))}
+            </div>
             <div className="stats-grid">
               <StatCard icon={<Users size={20} />} label="Active Staff" value={activeEmployees.length.toString()} sub={`${employees.length} total employees`} color="blue" />
-              <StatCard icon={<CheckCircle size={20} />} label="Weekly Payroll" value={formatMoney(weekPayroll)} sub="Approved earnings this week" color="green" />
-              <StatCard icon={<AlertCircle size={20} />} label="Pending Shifts" value={pendingWeekShifts.length.toString()} sub={`${formatMoney(weekPendingPayroll)} awaiting approval`} color="amber" />
-              <StatCard icon={<TrendingUp size={20} />} label="Weekly Shifts" value={weekShifts.length.toString()} sub="Completed shifts this week" color="purple" />
+              <StatCard icon={<CheckCircle size={20} />} label={period === "week" ? "Weekly Payroll" : period === "month" ? "Monthly Payroll" : "Total Payroll"} value={formatMoney(periodPayroll)} sub={`Approved earnings ${PERIOD_LABELS[period]}`} color="green" />
+              <StatCard icon={<AlertCircle size={20} />} label="Pending Shifts" value={pendingPeriodShifts.length.toString()} sub={`${formatMoney(periodPendingPayroll)} awaiting approval`} color="amber" />
+              <StatCard icon={<TrendingUp size={20} />} label={period === "week" ? "Weekly Shifts" : period === "month" ? "Monthly Shifts" : "Total Shifts"} value={periodShifts.length.toString()} sub={`Completed shifts ${PERIOD_LABELS[period]}`} color="purple" />
             </div>
 
             <StoreEarningsOverview />

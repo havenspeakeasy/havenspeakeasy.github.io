@@ -14,6 +14,7 @@ import ManageShifts from "@/pages/ManageShifts";
 import InjuryReport from "@/pages/InjuryReport";
 import ManageInjuries from "@/pages/ManageInjuries";
 import JobTitles from "@/pages/JobTitles";
+import StockManagement from "@/pages/StockManagement";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ function AppRoutes() {
       <Route path="/injury-report" element={<ProtectedRoute><InjuryReport /></ProtectedRoute>} />
       <Route path="/manage-injuries" element={<ManagerRoute><ManageInjuries /></ManagerRoute>} />
       <Route path="/job-titles" element={<ManagerRoute><JobTitles /></ManagerRoute>} />
+      <Route path="/stock" element={<ManagerRoute><StockManagement /></ManagerRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

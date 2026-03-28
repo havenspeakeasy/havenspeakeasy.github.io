@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { clockIn, clockOut, getActiveShift, formatMoney } from "@/lib/store";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Clock, LogIn, LogOut, Timer } from "lucide-react";
+import { Clock, LogIn, LogOut, Timer, X, DollarSign, Ban } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import CashCountModal from "@/components/CashCountModal";
 import EarningsLogTable from "@/components/EarningsLogTable";
@@ -17,6 +17,7 @@ export default function ClockPage() {
   const [loading, setLoading] = useState(false);
   const [lastShift, setLastShift] = useState<{ id: string; duration: number; earnings: number } | null>(null);
   const [showCashModal, setShowCashModal] = useState(false);
+  const [showChoiceModal, setShowChoiceModal] = useState(false);
 
   // On mount, check if there's an active shift in the database
   useEffect(() => {
@@ -62,10 +63,10 @@ export default function ClockPage() {
       setClockInTime(null);
       setElapsed(0);
       setLastShift({ id: shift.id, duration: shift.totalMinutes ?? 0, earnings: shift.earnings ?? 0 });
-      toast.success("Clocked out! Please count your cash below.");
+      toast.success("Clocked out successfully!");
       queryClient.invalidateQueries({ queryKey: ["shifts"] });
-      // Automatically open cash count modal
-      setShowCashModal(true);
+      // Show choice modal instead of auto-opening cash modal
+      setShowChoiceModal(true);
     }
   };
 
@@ -153,7 +154,7 @@ export default function ClockPage() {
               <button
                 className="haven-btn-primary mt-3"
                 style={{ width: "100%", justifyContent: "center" }}
-                onClick={() => setShowCashModal(true)}
+                onClick={() => setShowChoiceModal(true)}
               >
                 Count Cash / Log Earnings
               </button>
@@ -175,6 +176,44 @@ export default function ClockPage() {
         {/* Cash Logs History */}
         <EarningsLogTable />
       </div>
+
+      {/* Clock-out choice modal */}
+      {showChoiceModal && lastShift && (
+        <div className="modal-overlay" onClick={() => setShowChoiceModal(false)}>
+          <div className="modal-box modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">End of Shift</h2>
+              <button className="icon-btn" onClick={() => setShowChoiceModal(false)}><X size={18} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: "var(--cream-muted)", fontSize: "0.9rem", marginBottom: "1.25rem", lineHeight: 1.6 }}>
+                Did you take any cash during your shift?
+              </p>
+              <div className="clock-out-choice-grid">
+                <button
+                  className="clock-out-choice-btn clock-out-choice-cash"
+                  onClick={() => { setShowChoiceModal(false); setShowCashModal(true); }}
+                >
+                  <DollarSign size={22} />
+                  <span className="clock-out-choice-label">Count My Cash</span>
+                  <span className="clock-out-choice-sub">I collected cash this shift</span>
+                </button>
+                <button
+                  className="clock-out-choice-btn clock-out-choice-none"
+                  onClick={() => {
+                    setShowChoiceModal(false);
+                    toast.success("Noted — no cash taken this shift.");
+                  }}
+                >
+                  <Ban size={22} />
+                  <span className="clock-out-choice-label">No Money Taken</span>
+                  <span className="clock-out-choice-sub">I didn't collect any cash</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cash Count Modal */}
       {showCashModal && lastShift && (
