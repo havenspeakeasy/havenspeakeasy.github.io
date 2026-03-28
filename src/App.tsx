@@ -1,0 +1,67 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import ClockPage from "@/pages/ClockPage";
+import MyShifts from "@/pages/MyShifts";
+import Employees from "@/pages/Employees";
+import ManageShifts from "@/pages/ManageShifts";
+import InjuryReport from "@/pages/InjuryReport";
+import ManageInjuries from "@/pages/ManageInjuries";
+import JobTitles from "@/pages/JobTitles";
+import NotFound from "@/pages/NotFound";
+
+const queryClient = new QueryClient();
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function ManagerRoute({ children }: { children: React.ReactNode }) {
+  const { user, isOwnerOrManager } = useAuth();
+  if (!user) return <Navigate to="/" replace />;
+  if (!isOwnerOrManager) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  const { user } = useAuth();
+  return (
+    <Routes>
+      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/clock" element={<ProtectedRoute><ClockPage /></ProtectedRoute>} />
+      <Route path="/shifts" element={<ProtectedRoute><MyShifts /></ProtectedRoute>} />
+      <Route path="/employees" element={<ManagerRoute><Employees /></ManagerRoute>} />
+      <Route path="/manage-shifts" element={<ManagerRoute><ManageShifts /></ManagerRoute>} />
+      <Route path="/injury-report" element={<ProtectedRoute><InjuryReport /></ProtectedRoute>} />
+      <Route path="/manage-injuries" element={<ManagerRoute><ManageInjuries /></ManagerRoute>} />
+      <Route path="/job-titles" element={<ManagerRoute><JobTitles /></ManagerRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
