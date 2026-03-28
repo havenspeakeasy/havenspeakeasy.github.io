@@ -1,68 +1,80 @@
+import { supabase } from "@/integrations/supabase/client";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface JobTitle {
   id: string;
   name: string;
-  isAdmin: boolean;   // true = Owner/Manager tier, false = Regular staff
+  isAdmin: boolean;
   createdAt: string;
 }
 
-// ─── Seed Data ───────────────────────────────────────────────────────────────
+// ─── Row mapper ───────────────────────────────────────────────────────────────
 
-let jobTitles: JobTitle[] = [
-  { id: "jt-1", name: "Owner",       isAdmin: true,  createdAt: "2024-01-01" },
-  { id: "jt-2", name: "Line Manager", isAdmin: true,  createdAt: "2024-01-01" },
-  { id: "jt-3", name: "Bartender",   isAdmin: false, createdAt: "2024-01-01" },
-  { id: "jt-4", name: "Card Dealer", isAdmin: false, createdAt: "2024-01-01" },
-  { id: "jt-5", name: "Security",    isAdmin: false, createdAt: "2024-01-01" },
-];
+function mapRow(row: any): JobTitle {
+  return {
+    id: row.id,
+    name: row.name,
+    isAdmin: row.is_admin,
+    createdAt: row.created_at,
+  };
+}
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function getJobTitles(): Promise<JobTitle[]> {
-  await delay(150);
-  return [...jobTitles];
+  const { data, error } = await supabase
+    .from("job_titles")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  console.log("[JobTitlesStore] Fetched:", data);
+  return (data ?? []).map(mapRow);
 }
 
-export async function addJobTitle(
-  name: string,
-  isAdmin: boolean
-): Promise<JobTitle> {
-  await delay(200);
+export async function addJobTitle(name: string, isAdmin: boolean): Promise<JobTitle> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Job title name cannot be empty.");
-  const duplicate = jobTitles.find(
-    (jt) => jt.name.toLowerCase() === trimmed.toLowerCase()
-  );
-  if (duplicate) throw new Error(`"${trimmed}" already exists.`);
-  const jt: JobTitle = {
-    id: `jt-${Date.now()}`,
-    name: trimmed,
-    isAdmin,
-    createdAt: new Date().toISOString().split("T")[0],
-  };
-  jobTitles = [...jobTitles, jt];
-  console.log("[JobTitlesStore] Added:", jt);
-  return jt;
+
+  const { data, error } = await supabase
+    .from("job_titles")
+    .insert({
+      id: `jt-${Date.now()}`,
+      name: trimmed,
+      is_admin: isAdmin,
+      created_at: new Date().toISOString().split("T")[0],
+    })
+    .select()
+    .single();
+  if (error) {
+    if (error.code === "23505") throw new Error(`"${trimmed}" already exists.`);
+    throw new Error(error.message);
+  }
+  console.log("[JobTitlesStore] Added:", data);
+  return mapRow(data);
 }
 
 export async function deleteJobTitle(id: string): Promise<void> {
-  await delay(150);
-  jobTitles = jobTitles.filter((jt) => jt.id !== id);
+  const { error } = await supabase.from("job_titles").delete().eq("id", id);
+  if (error) throw new Error(error.message);
   console.log("[JobTitlesStore] Deleted:", id);
 }
 
-// Helper to get just the names (used in dropdowns elsewhere)
 export async function getJobTitleNames(): Promise<string[]> {
-  await delay(100);
-  return jobTitles.map((jt) => jt.name);
+  const titles = await getJobTitles();
+  return titles.map((jt) => jt.name);
 }
 
-// Sync helper — no delay, used inside store.ts logic
+// Sync in-memory cache for isAdminRole checks (refreshed on app load)
+let _adminRoleNamesCache: string[] = ["Owner", "Line Manager"];
+
+export async function refreshAdminRoleNamesCache(): Promise<void> {
+  const titles = await getJobTitles();
+  _adminRoleNamesCache = titles.filter((jt) => jt.isAdmin).map((jt) => jt.name);
+  console.log("[JobTitlesStore] Admin cache refreshed:", _adminRoleNamesCache);
+}
+
+// Sync helper — used inside store.ts and AuthContext
 export function getAdminRoleNames(): string[] {
-  return jobTitles.filter((jt) => jt.isAdmin).map((jt) => jt.name);
-}
-
-function delay(ms: number) {
-  return new Promise((res) => setTimeout(res, ms));
+  return _adminRoleNamesCache;
 }

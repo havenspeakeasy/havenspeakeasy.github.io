@@ -1,95 +1,91 @@
-export type InjuryStatus = "pending" | "approved" | "declined";
+import { supabase } from "@/integrations/supabase/client";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type InjuryStatus = "pending" | "approved" | "declined";
 export type MedicalStatus = "received" | "pending_care";
 
 export interface InjuryReport {
   id: string;
   employeeId: string;
-  incidentDate: string;        // ISO string
-  submittedAt: string;         // ISO string
-  location: string;            // Where on premises it happened
-  description: string;         // What happened
-  injuryType: string;          // e.g. "Cut", "Bruise", "Burn", etc.
-  medicalStatus: MedicalStatus; // received care or still needs to go
-  medicalCost: number | null;  // USD — null if not yet received care
-  medicalNotes: string;        // e.g. hospital name, treatment details
+  incidentDate: string;
+  submittedAt: string;
+  location: string;
+  description: string;
+  injuryType: string;
+  medicalStatus: MedicalStatus;
+  medicalCost: number | null;
+  medicalNotes: string;
   status: InjuryStatus;
-  managerNote: string;         // Optional note from manager on approval/decline
+  managerNote: string;
 }
 
-// ─── Seed Data ───────────────────────────────────────────────────────────────
+// ─── Row mapper ───────────────────────────────────────────────────────────────
 
-let injuryReports: InjuryReport[] = [
-  {
-    id: "ir-001",
-    employeeId: "emp-3",
-    incidentDate: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
-    location: "Bar Counter",
-    description: "Cut my hand on a broken glass while cleaning up after closing. The glass shattered and a shard lodged into my palm.",
-    injuryType: "Laceration",
-    medicalStatus: "received",
-    medicalCost: 120.00,
-    medicalNotes: "Visited Urgent Care on Pillbox Hill. Received stitches and a tetanus shot.",
-    status: "pending",
-    managerNote: "",
-  },
-  {
-    id: "ir-002",
-    employeeId: "emp-4",
-    incidentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-    location: "Back Storage Room",
-    description: "Slipped on a wet floor near the ice machine. Fell and hurt my lower back.",
-    injuryType: "Slip & Fall",
-    medicalStatus: "pending_care",
-    medicalCost: null,
-    medicalNotes: "Haven't seen a doctor yet but the pain is persistent.",
-    status: "pending",
-    managerNote: "",
-  },
-  {
-    id: "ir-003",
-    employeeId: "emp-2",
-    incidentDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString(),
-    location: "Entrance / Door",
-    description: "Got into an altercation while managing the door. Sustained bruising on my forearm.",
-    injuryType: "Altercation Injury",
-    medicalStatus: "received",
-    medicalCost: 65.00,
-    medicalNotes: "Visited a walk-in clinic. X-ray confirmed no fractures. Pain relief prescribed.",
-    status: "approved",
-    managerNote: "Reimbursement approved. Well handled.",
-  },
-];
+function mapRow(row: any): InjuryReport {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    incidentDate: row.incident_date,
+    submittedAt: row.submitted_at,
+    location: row.location,
+    description: row.description,
+    injuryType: row.injury_type,
+    medicalStatus: row.medical_status as MedicalStatus,
+    medicalCost: row.medical_cost !== null ? Number(row.medical_cost) : null,
+    medicalNotes: row.medical_notes ?? "",
+    status: row.status as InjuryStatus,
+    managerNote: row.manager_note ?? "",
+  };
+}
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function getInjuryReports(): Promise<InjuryReport[]> {
-  await delay(150);
-  return [...injuryReports];
+  const { data, error } = await supabase
+    .from("injury_reports")
+    .select("*")
+    .order("submitted_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  console.log("[InjuryStore] Fetched all:", data?.length);
+  return (data ?? []).map(mapRow);
 }
 
 export async function getMyInjuryReports(employeeId: string): Promise<InjuryReport[]> {
-  await delay(150);
-  return injuryReports.filter(r => r.employeeId === employeeId);
+  const { data, error } = await supabase
+    .from("injury_reports")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .order("submitted_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  console.log("[InjuryStore] Fetched for", employeeId, ":", data?.length);
+  return (data ?? []).map(mapRow);
 }
 
 export async function addInjuryReport(
-  data: Omit<InjuryReport, "id" | "submittedAt" | "status" | "managerNote">
+  reportData: Omit<InjuryReport, "id" | "submittedAt" | "status" | "managerNote">
 ): Promise<InjuryReport> {
-  await delay(200);
-  const report: InjuryReport = {
-    ...data,
-    id: `ir-${Date.now()}`,
-    submittedAt: new Date().toISOString(),
-    status: "pending",
-    managerNote: "",
-  };
-  injuryReports = [report, ...injuryReports];
-  console.log("[InjuryStore] Report added:", report);
-  return report;
+  const { data, error } = await supabase
+    .from("injury_reports")
+    .insert({
+      id: `ir-${Date.now()}`,
+      employee_id: reportData.employeeId,
+      incident_date: reportData.incidentDate,
+      location: reportData.location,
+      description: reportData.description,
+      injury_type: reportData.injuryType,
+      medical_status: reportData.medicalStatus,
+      medical_cost: reportData.medicalCost,
+      medical_notes: reportData.medicalNotes,
+      status: "pending",
+      manager_note: "",
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  console.log("[InjuryStore] Report added:", data);
+  return mapRow(data);
 }
 
 export async function updateInjuryReportStatus(
@@ -97,21 +93,20 @@ export async function updateInjuryReportStatus(
   status: InjuryStatus,
   managerNote = ""
 ): Promise<InjuryReport> {
-  await delay(150);
-  injuryReports = injuryReports.map(r =>
-    r.id === id ? { ...r, status, managerNote } : r
-  );
-  const updated = injuryReports.find(r => r.id === id)!;
-  console.log("[InjuryStore] Status updated:", updated);
-  return updated;
+  const { data, error } = await supabase
+    .from("injury_reports")
+    .update({ status, manager_note: managerNote })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  console.log("[InjuryStore] Status updated:", data);
+  return mapRow(data);
 }
 
 export async function deleteInjuryReport(id: string): Promise<void> {
-  await delay(150);
-  injuryReports = injuryReports.filter(r => r.id !== id);
+  const { error } = await supabase.from("injury_reports").delete().eq("id", id);
+  if (error) throw new Error(error.message);
   console.log("[InjuryStore] Report deleted:", id);
-}
-
-function delay(ms: number) {
-  return new Promise(res => setTimeout(res, ms));
 }

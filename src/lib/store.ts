@@ -1,263 +1,326 @@
-import { getAdminRoleNames } from "@/lib/jobTitlesStore";
+import { supabase } from "@/integrations/supabase/client";
+import { getAdminRoleNames, refreshAdminRoleNamesCache } from "@/lib/jobTitlesStore";
 
-export type Role = string; // Now dynamic — managed via jobTitlesStore
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-export type Employee = {
+export type Role = string;
+
+export interface Employee {
   id: string;
   name: string;
   username: string;
   password: string;
   role: Role;
   hourlyRate: number;
-  avatarInitials: string;
-  avatarUrl?: string;
-  joinedAt: string;
   isActive: boolean;
-};
+  avatarInitials: string;
+  avatarUrl?: string | null;
+  joinedAt: string;
+}
 
-export type ShiftStatus = "pending" | "approved" | "declined";
-
-export type Shift = {
+export interface Shift {
   id: string;
   employeeId: string;
   clockIn: string;
   clockOut: string | null;
   totalMinutes: number | null;
-  status: ShiftStatus;
-  note?: string;
   earnings: number | null;
-};
-
-// ---------- Seed Data ----------
-const initialEmployees: Employee[] = [
-  {
-    id: "emp-1",
-    name: "Vincent Moretti",
-    username: "owner",
-    password: "owner123",
-    role: "Owner",
-    hourlyRate: 0,
-    avatarInitials: "VM",
-    joinedAt: "2024-01-15",
-    isActive: true,
-  },
-  {
-    id: "emp-2",
-    name: "Rosa Delgado",
-    username: "rosa.d",
-    password: "pass123",
-    role: "Line Manager",
-    hourlyRate: 120,
-    avatarInitials: "RD",
-    joinedAt: "2024-02-01",
-    isActive: true,
-  },
-  {
-    id: "emp-3",
-    name: "Tommy Vega",
-    username: "tommy.v",
-    password: "pass123",
-    role: "Bartender",
-    hourlyRate: 85,
-    avatarInitials: "TV",
-    joinedAt: "2024-03-10",
-    isActive: true,
-  },
-  {
-    id: "emp-4",
-    name: "Lily Chen",
-    username: "lily.c",
-    password: "pass123",
-    role: "Card Dealer",
-    hourlyRate: 75,
-    avatarInitials: "LC",
-    joinedAt: "2024-03-22",
-    isActive: true,
-  },
-  {
-    id: "emp-5",
-    name: "Marcus Stone",
-    username: "marcus.s",
-    password: "pass123",
-    role: "Security",
-    hourlyRate: 90,
-    avatarInitials: "MS",
-    joinedAt: "2024-04-05",
-    isActive: true,
-  },
-  {
-    id: "emp-6",
-    name: "Elena Park",
-    username: "elena.p",
-    password: "pass123",
-    role: "Bartender",
-    hourlyRate: 70,
-    avatarInitials: "EP",
-    joinedAt: "2024-05-18",
-    isActive: false,
-  },
-];
-
-const now = new Date();
-const d = (daysAgo: number, hours: number, mins = 0) => {
-  const d = new Date(now);
-  d.setDate(d.getDate() - daysAgo);
-  d.setHours(hours, mins, 0, 0);
-  return d.toISOString();
-};
-
-const initialShifts: Shift[] = [
-  {
-    id: "shift-1", employeeId: "emp-2", clockIn: d(6, 18), clockOut: d(6, 23, 30),
-    totalMinutes: 330, status: "approved", earnings: 660, note: "Busy Friday night shift",
-  },
-  {
-    id: "shift-2", employeeId: "emp-3", clockIn: d(5, 20), clockOut: d(5, 2),
-    totalMinutes: 360, status: "approved", earnings: 510, note: "",
-  },
-  {
-    id: "shift-3", employeeId: "emp-4", clockIn: d(4, 19), clockOut: d(4, 23),
-    totalMinutes: 240, status: "pending", earnings: 300, note: "",
-  },
-  {
-    id: "shift-4", employeeId: "emp-5", clockIn: d(3, 21), clockOut: d(3, 3),
-    totalMinutes: 360, status: "pending", earnings: 540, note: "Door was slammed",
-  },
-  {
-    id: "shift-5", employeeId: "emp-3", clockIn: d(2, 19), clockOut: d(2, 23, 45),
-    totalMinutes: 285, status: "declined", earnings: 403.75, note: "",
-  },
-  {
-    id: "shift-6", employeeId: "emp-2", clockIn: d(1, 18, 30), clockOut: d(1, 0),
-    totalMinutes: 330, status: "pending", earnings: 660, note: "",
-  },
-];
-
-// ---------- In-Memory State ----------
-let employees: Employee[] = [...initialEmployees];
-let shifts: Shift[] = [...initialShifts];
-let currentUser: Employee | null = null;
-let activeClockIns: Record<string, string> = {}; // employeeId -> clockInISO
-
-// ---------- Auth ----------
-export async function login(username: string, password: string): Promise<Employee> {
-  await delay(400);
-  const emp = employees.find(e => e.username === username && e.password === password);
-  if (!emp) throw new Error("Invalid username or password.");
-  if (!emp.isActive) throw new Error("Your account has been deactivated. Please contact management.");
-  currentUser = emp;
-  return emp;
+  status: "pending" | "approved" | "declined";
+  notes: string;
 }
 
-export async function logout(): Promise<void> {
-  await delay(200);
-  currentUser = null;
+// ─── Row mappers ──────────────────────────────────────────────────────────────
+
+function mapEmployee(row: any): Employee {
+  return {
+    id: row.id,
+    name: row.name,
+    username: row.username,
+    password: row.password,
+    role: row.role,
+    hourlyRate: Number(row.hourly_rate),
+    isActive: row.is_active,
+    avatarInitials: row.avatar_initials,
+    avatarUrl: row.avatar_url ?? null,
+    joinedAt: row.created_at ?? new Date().toISOString(),
+  };
 }
+
+function mapShift(row: any): Shift {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    clockIn: row.clock_in,
+    clockOut: row.clock_out ?? null,
+    totalMinutes: row.total_minutes ?? null,
+    earnings: row.earnings !== null ? Number(row.earnings) : null,
+    status: row.status,
+    notes: row.notes ?? "",
+  };
+}
+
+// ─── Session state ────────────────────────────────────────────────────────────
+
+const SESSION_KEY = "haven_current_user";
+
+let currentUser: Employee | null = (() => {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as Employee; } catch { return null; }
+})();
 
 export function getCurrentUser(): Employee | null {
+  if (currentUser) return currentUser;
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try { currentUser = JSON.parse(raw) as Employee; return currentUser; } catch { return null; }
+}
+
+// ─── Authentication ───────────────────────────────────────────────────────────
+
+export async function login(username: string, password: string): Promise<Employee> {
+  await refreshAdminRoleNamesCache();
+
+  const { data, error } = await supabase
+    .from("employees")
+    .select("*")
+    .eq("username", username)
+    .single();
+
+  if (error || !data) throw new Error("Invalid username or password.");
+  if (data.password !== password) throw new Error("Invalid username or password.");
+  if (!data.is_active) throw new Error("This account has been deactivated. Contact management.");
+
+  currentUser = mapEmployee(data);
+  localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+  console.log("[Store] Logged in:", currentUser);
   return currentUser;
 }
 
-// ---------- Employees ----------
+export async function logout(): Promise<void> {
+  currentUser = null;
+  localStorage.removeItem(SESSION_KEY);
+  console.log("[Store] Logged out.");
+}
+
+// ─── Employee Management ──────────────────────────────────────────────────────
+
 export async function getEmployees(): Promise<Employee[]> {
-  await delay(300);
-  return [...employees];
+  const { data, error } = await supabase
+    .from("employees")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  console.log("[Store] Fetched employees:", data?.length);
+  return (data ?? []).map(mapEmployee);
 }
 
-export async function addEmployee(data: Omit<Employee, "id" | "avatarInitials">): Promise<Employee> {
-  await delay(400);
-  const existing = employees.find(e => e.username === data.username);
-  if (existing) throw new Error("Username already exists.");
-  const emp: Employee = {
-    ...data,
-    id: `emp-${Date.now()}`,
-    avatarInitials: data.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-  };
-  employees = [...employees, emp];
-  return emp;
+export async function addEmployee(
+  emp: Omit<Employee, "id" | "avatarInitials">
+): Promise<Employee> {
+  const initials = emp.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const { data, error } = await supabase
+    .from("employees")
+    .insert({
+      id: `emp-${Date.now()}`,
+      name: emp.name,
+      username: emp.username,
+      password: emp.password,
+      role: emp.role,
+      hourly_rate: emp.hourlyRate,
+      is_active: emp.isActive,
+      avatar_initials: initials,
+      avatar_url: emp.avatarUrl ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === "23505") throw new Error("Username already taken.");
+    throw new Error(error.message);
+  }
+  console.log("[Store] Employee added:", data);
+  return mapEmployee(data);
 }
 
-export async function updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
-  await delay(400);
-  employees = employees.map(e => e.id === id ? { ...e, ...data } : e);
-  const updated = employees.find(e => e.id === id)!;
+export async function updateEmployee(
+  id: string,
+  updates: Partial<Omit<Employee, "id" | "avatarInitials">>
+): Promise<Employee> {
+  const dbUpdates: Record<string, any> = {};
+  if (updates.name !== undefined) {
+    dbUpdates.name = updates.name;
+    dbUpdates.avatar_initials = updates.name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
+  if (updates.username !== undefined) dbUpdates.username = updates.username;
+  if (updates.password !== undefined) dbUpdates.password = updates.password;
+  if (updates.role !== undefined) dbUpdates.role = updates.role;
+  if (updates.hourlyRate !== undefined) dbUpdates.hourly_rate = updates.hourlyRate;
+  if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+  if (updates.avatarUrl !== undefined) dbUpdates.avatar_url = updates.avatarUrl;
+
+  const { data, error } = await supabase
+    .from("employees")
+    .update(dbUpdates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  const updated = mapEmployee(data);
   if (currentUser?.id === id) currentUser = updated;
+  console.log("[Store] Employee updated:", updated);
   return updated;
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-  await delay(300);
-  employees = employees.filter(e => e.id !== id);
+  const { error } = await supabase.from("employees").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  console.log("[Store] Employee deleted:", id);
 }
 
-// ---------- Shifts ----------
-export async function getShifts(): Promise<Shift[]> {
-  await delay(300);
-  return [...shifts];
+// ─── Shift & Clocking Logic ───────────────────────────────────────────────────
+
+export function isClocked(_employeeId: string): boolean {
+  // This is checked synchronously; we rely on the shifts query to tell us
+  // if there's an open shift. Returns false by default; ClockPage checks via query.
+  return false;
 }
 
-export async function getShiftsByEmployee(employeeId: string): Promise<Shift[]> {
-  await delay(300);
-  return shifts.filter(s => s.employeeId === employeeId);
+export async function getActiveShift(employeeId: string): Promise<Shift | null> {
+  const { data, error } = await supabase
+    .from("shifts")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .is("clock_out", null)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapShift(data) : null;
 }
 
 export async function clockIn(employeeId: string): Promise<Shift> {
-  await delay(400);
-  if (activeClockIns[employeeId]) throw new Error("Already clocked in.");
-  const clockInTime = new Date().toISOString();
-  activeClockIns[employeeId] = clockInTime;
-  const shift: Shift = {
-    id: `shift-${Date.now()}`,
-    employeeId,
-    clockIn: clockInTime,
-    clockOut: null,
-    totalMinutes: null,
-    status: "pending",
-    earnings: null,
-    note: "",
-  };
-  shifts = [...shifts, shift];
-  return shift;
+  const existing = await getActiveShift(employeeId);
+  if (existing) throw new Error("You are already clocked in.");
+
+  const { data, error } = await supabase
+    .from("shifts")
+    .insert({
+      id: `shift-${Date.now()}`,
+      employee_id: employeeId,
+      clock_in: new Date().toISOString(),
+      status: "pending",
+      notes: "",
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  console.log("[Store] Clocked in:", data);
+  return mapShift(data);
 }
 
 export async function clockOut(employeeId: string): Promise<Shift> {
-  await delay(400);
-  const clockInTime = activeClockIns[employeeId];
-  if (!clockInTime) throw new Error("Not currently clocked in.");
-  const clockOutTime = new Date().toISOString();
-  const totalMinutes = Math.round((new Date(clockOutTime).getTime() - new Date(clockInTime).getTime()) / 60000);
-  delete activeClockIns[employeeId];
-  const emp = employees.find(e => e.id === employeeId);
-  const earnings = emp ? parseFloat(((totalMinutes / 60) * emp.hourlyRate).toFixed(2)) : 0;
-  shifts = shifts.map(s =>
-    s.employeeId === employeeId && s.clockOut === null
-      ? { ...s, clockOut: clockOutTime, totalMinutes, earnings }
-      : s
+  const active = await getActiveShift(employeeId);
+  if (!active) throw new Error("You are not currently clocked in.");
+
+  const { data: empData } = await supabase
+    .from("employees")
+    .select("hourly_rate")
+    .eq("id", employeeId)
+    .single();
+
+  const hourlyRate = empData ? Number(empData.hourly_rate) : 0;
+  const clockOutTime = new Date();
+  const clockInTime = new Date(active.clockIn);
+  const totalMinutes = Math.round((clockOutTime.getTime() - clockInTime.getTime()) / 60000);
+  const earnings = parseFloat(((totalMinutes / 60) * hourlyRate).toFixed(2));
+
+  const { data, error } = await supabase
+    .from("shifts")
+    .update({
+      clock_out: clockOutTime.toISOString(),
+      total_minutes: totalMinutes,
+      earnings,
+    })
+    .eq("id", active.id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  console.log("[Store] Clocked out:", data);
+  return mapShift(data);
+}
+
+export async function getShifts(): Promise<Shift[]> {
+  const { data, error } = await supabase
+    .from("shifts")
+    .select("*")
+    .order("clock_in", { ascending: false });
+  if (error) throw new Error(error.message);
+  console.log("[Store] Fetched shifts:", data?.length);
+  return (data ?? []).map(mapShift);
+}
+
+export async function updateShiftStatus(
+  shiftId: string,
+  status: "approved" | "declined"
+): Promise<Shift> {
+  const { data, error } = await supabase
+    .from("shifts")
+    .update({ status })
+    .eq("id", shiftId)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  console.log("[Store] Shift status updated:", data);
+  return mapShift(data);
+}
+
+export async function addManualShift(
+  employeeId: string,
+  clockIn: string,
+  clockOut: string,
+  notes: string,
+  hourlyRate: number
+): Promise<Shift> {
+  const totalMinutes = Math.round(
+    (new Date(clockOut).getTime() - new Date(clockIn).getTime()) / 60000
   );
-  return shifts.find(s => s.employeeId === employeeId && s.clockOut === clockOutTime)!;
+  const earnings = parseFloat(((totalMinutes / 60) * hourlyRate).toFixed(2));
+
+  const { data, error } = await supabase
+    .from("shifts")
+    .insert({
+      id: `shift-${Date.now()}`,
+      employee_id: employeeId,
+      clock_in: clockIn,
+      clock_out: clockOut,
+      total_minutes: totalMinutes,
+      earnings,
+      status: "pending",
+      notes,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  console.log("[Store] Manual shift added:", data);
+  return mapShift(data);
 }
 
-export function isClocked(employeeId: string): boolean {
-  return !!activeClockIns[employeeId];
-}
-
-export async function updateShiftStatus(shiftId: string, status: ShiftStatus): Promise<Shift> {
-  await delay(300);
-  shifts = shifts.map(s => s.id === shiftId ? { ...s, status } : s);
-  return shifts.find(s => s.id === shiftId)!;
-}
-
-export async function addManualShift(data: Omit<Shift, "id">): Promise<Shift> {
-  await delay(400);
-  const shift: Shift = { ...data, id: `shift-${Date.now()}` };
-  shifts = [...shifts, shift];
-  return shift;
-}
-
-// ---------- Helpers ----------
-function delay(ms: number) {
-  return new Promise(res => setTimeout(res, ms));
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -266,11 +329,9 @@ export function formatDuration(minutes: number): string {
 }
 
 export function formatMoney(amount: number): string {
-  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }
 
-// ADMIN_ROLES and REGULAR_ROLES are now driven by jobTitlesStore.
-// Use getAdminRoleNames() from jobTitlesStore for live checks.
 export function isAdminRole(role: string): boolean {
   return getAdminRoleNames().includes(role);
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { clockIn, clockOut, isClocked, formatMoney } from "@/lib/store";
+import { clockIn, clockOut, getActiveShift, formatMoney } from "@/lib/store";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Clock, LogIn, LogOut, Timer } from "lucide-react";
@@ -11,12 +11,23 @@ import EarningsLogTable from "@/components/EarningsLogTable";
 export default function ClockPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [clocked, setClocked] = useState(user ? isClocked(user.id) : false);
+  const [clocked, setClocked] = useState(false);
   const [clockInTime, setClockInTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(false);
   const [lastShift, setLastShift] = useState<{ id: string; duration: number; earnings: number } | null>(null);
   const [showCashModal, setShowCashModal] = useState(false);
+
+  // On mount, check if there's an active shift in the database
+  useEffect(() => {
+    if (!user) return;
+    getActiveShift(user.id).then((shift) => {
+      if (shift) {
+        setClocked(true);
+        setClockInTime(new Date(shift.clockIn));
+      }
+    }).catch(console.error);
+  }, [user]);
 
   useEffect(() => {
     if (!clocked || !clockInTime) return;

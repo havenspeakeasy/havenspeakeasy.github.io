@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getShifts, getEmployees, updateShiftStatus, formatDuration, formatMoney, type ShiftStatus, addManualShift } from "@/lib/store";
+import { getShifts, getEmployees, updateShiftStatus, formatDuration, formatMoney, addManualShift } from "@/lib/store";
 import AppShell from "@/components/AppShell";
 import { StatusBadge, formatDateTime } from "./Dashboard";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ export default function ManageShifts() {
   const [addModal, setAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ employeeId: "", clockIn: "", clockOut: "", note: "" });
 
-  const handleStatus = async (shiftId: string, status: ShiftStatus) => {
+  const handleStatus = async (shiftId: string, status: "approved" | "declined") => {
     await updateShiftStatus(shiftId, status);
     toast.success(`Shift ${status}.`);
     qc.invalidateQueries({ queryKey: ["shifts"] });
@@ -50,10 +50,8 @@ export default function ManageShifts() {
     if (!emp) return;
     const clockInDate = new Date(addForm.clockIn);
     const clockOutDate = new Date(addForm.clockOut);
-    const totalMinutes = Math.round((clockOutDate.getTime() - clockInDate.getTime()) / 60000);
-    if (totalMinutes <= 0) { toast.error("Clock out must be after clock in."); return; }
-    const earnings = parseFloat(((totalMinutes / 60) * emp.hourlyRate).toFixed(2));
-    await addManualShift({ employeeId: addForm.employeeId, clockIn: clockInDate.toISOString(), clockOut: clockOutDate.toISOString(), totalMinutes, status: "pending", earnings, note: addForm.note });
+    if (clockOutDate.getTime() <= clockInDate.getTime()) { toast.error("Clock out must be after clock in."); return; }
+    await addManualShift(addForm.employeeId, clockInDate.toISOString(), clockOutDate.toISOString(), addForm.note, emp.hourlyRate);
     toast.success("Shift added and pending approval.");
     qc.invalidateQueries({ queryKey: ["shifts"] });
     setAddModal(false);
