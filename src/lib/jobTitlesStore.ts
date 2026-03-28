@@ -9,9 +9,7 @@ export interface JobTitle {
   createdAt: string;
 }
 
-// ─── Row mapper ───────────────────────────────────────────────────────────────
-
-function mapRow(row: any): JobTitle {
+function rowToJobTitle(row: any): JobTitle {
   return {
     id: row.id,
     name: row.name,
@@ -23,35 +21,24 @@ function mapRow(row: any): JobTitle {
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function getJobTitles(): Promise<JobTitle[]> {
-  const { data, error } = await supabase
-    .from("job_titles")
-    .select("*")
-    .order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("job_titles").select("*").order("name");
   if (error) throw new Error(error.message);
-  console.log("[JobTitlesStore] Fetched:", data);
-  return (data ?? []).map(mapRow);
+  console.log("[JobTitlesStore] Fetched:", data.length);
+  return data.map(rowToJobTitle);
 }
 
 export async function addJobTitle(name: string, isAdmin: boolean): Promise<JobTitle> {
-  const trimmed = name.trim();
-  if (!trimmed) throw new Error("Job title name cannot be empty.");
-
-  const { data, error } = await supabase
-    .from("job_titles")
-    .insert({
-      id: `jt-${Date.now()}`,
-      name: trimmed,
-      is_admin: isAdmin,
-      created_at: new Date().toISOString().split("T")[0],
-    })
-    .select()
-    .single();
-  if (error) {
-    if (error.code === "23505") throw new Error(`"${trimmed}" already exists.`);
-    throw new Error(error.message);
-  }
+  const id = `jt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const createdAt = new Date().toISOString();
+  const { data, error } = await supabase.from("job_titles").insert({
+    id,
+    name,
+    is_admin: isAdmin,
+    created_at: createdAt,
+  }).select().single();
+  if (error) throw new Error(error.message);
   console.log("[JobTitlesStore] Added:", data);
-  return mapRow(data);
+  return rowToJobTitle(data);
 }
 
 export async function deleteJobTitle(id: string): Promise<void> {
@@ -65,16 +52,23 @@ export async function getJobTitleNames(): Promise<string[]> {
   return titles.map((jt) => jt.name);
 }
 
-// Sync in-memory cache for isAdminRole checks (refreshed on app load)
+export function getAdminRoleNames(): string[] {
+  // This is called synchronously from AuthContext — return from cache
+  return _adminRoleNamesCache;
+}
+
+// In-memory cache, refreshed on login and after mutations
 let _adminRoleNamesCache: string[] = ["Owner", "Line Manager"];
 
 export async function refreshAdminRoleNamesCache(): Promise<void> {
-  const titles = await getJobTitles();
-  _adminRoleNamesCache = titles.filter((jt) => jt.isAdmin).map((jt) => jt.name);
+  const { data, error } = await supabase.from("job_titles").select("name").eq("is_admin", true);
+  if (error) {
+    console.warn("[JobTitlesStore] Failed to refresh admin cache:", error.message);
+    return;
+  }
+  _adminRoleNamesCache = data.map((r: any) => r.name);
   console.log("[JobTitlesStore] Admin cache refreshed:", _adminRoleNamesCache);
 }
 
-// Sync helper — used inside store.ts and AuthContext
-export function getAdminRoleNames(): string[] {
-  return _adminRoleNamesCache;
-}
+// Bootstrap the cache immediately on module load
+refreshAdminRoleNamesCache().catch(console.warn);

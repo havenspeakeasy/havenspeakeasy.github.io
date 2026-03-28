@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { type Employee, getCurrentUser, logout as storeLogout } from "@/lib/store";
+import { type Employee, restoreSession, logout as storeLogout } from "@/lib/store";
 import { getAdminRoleNames, refreshAdminRoleNamesCache } from "@/lib/jobTitlesStore";
 
 type AuthContextType = {
@@ -7,6 +7,7 @@ type AuthContextType = {
   setUser: (u: Employee | null) => void;
   logout: () => void;
   isOwnerOrManager: boolean;
+  isRestoring: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -14,21 +15,21 @@ const AuthContext = createContext<AuthContextType>({
   setUser: () => {},
   logout: () => {},
   isOwnerOrManager: false,
+  isRestoring: true,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Employee | null>(getCurrentUser());
-  const [adminCacheReady, setAdminCacheReady] = useState(false);
+  const [user, setUser] = useState<Employee | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
 
   useEffect(() => {
-    // Hydrate user from localStorage (handles page refreshes)
-    const restored = getCurrentUser();
-    if (restored) setUser(restored);
-
-    // Refresh admin role cache so isOwnerOrManager is accurate
-    refreshAdminRoleNamesCache()
-      .catch(console.error)
-      .finally(() => setAdminCacheReady(true));
+    // Restore session from Supabase on page load
+    (async () => {
+      await refreshAdminRoleNamesCache();
+      const restored = await restoreSession();
+      if (restored) setUser(restored);
+      setIsRestoring(false);
+    })();
   }, []);
 
   const logout = async () => {
@@ -36,11 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  // Re-compute whenever user or cache readiness changes
-  const isOwnerOrManager = adminCacheReady && user ? getAdminRoleNames().includes(user.role) : user ? getAdminRoleNames().includes(user.role) : false;
+  const isOwnerOrManager = user ? getAdminRoleNames().includes(user.role) : false;
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, isOwnerOrManager }}>
+    <AuthContext.Provider value={{ user, setUser, logout, isOwnerOrManager, isRestoring }}>
       {children}
     </AuthContext.Provider>
   );

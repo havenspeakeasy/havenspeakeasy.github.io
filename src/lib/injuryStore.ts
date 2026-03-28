@@ -20,9 +20,7 @@ export interface InjuryReport {
   managerNote: string;
 }
 
-// ─── Row mapper ───────────────────────────────────────────────────────────────
-
-function mapRow(row: any): InjuryReport {
+function rowToReport(row: any): InjuryReport {
   return {
     id: row.id,
     employeeId: row.employee_id,
@@ -32,7 +30,7 @@ function mapRow(row: any): InjuryReport {
     description: row.description,
     injuryType: row.injury_type,
     medicalStatus: row.medical_status as MedicalStatus,
-    medicalCost: row.medical_cost !== null ? Number(row.medical_cost) : null,
+    medicalCost: row.medical_cost !== null ? parseFloat(row.medical_cost) : null,
     medicalNotes: row.medical_notes ?? "",
     status: row.status as InjuryStatus,
     managerNote: row.manager_note ?? "",
@@ -42,13 +40,10 @@ function mapRow(row: any): InjuryReport {
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function getInjuryReports(): Promise<InjuryReport[]> {
-  const { data, error } = await supabase
-    .from("injury_reports")
-    .select("*")
-    .order("submitted_at", { ascending: false });
+  const { data, error } = await supabase.from("injury_reports").select("*").order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Fetched all:", data?.length);
-  return (data ?? []).map(mapRow);
+  console.log("[InjuryStore] Fetched all:", data.length);
+  return data.map(rowToReport);
 }
 
 export async function getMyInjuryReports(employeeId: string): Promise<InjuryReport[]> {
@@ -58,34 +53,30 @@ export async function getMyInjuryReports(employeeId: string): Promise<InjuryRepo
     .eq("employee_id", employeeId)
     .order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Fetched for", employeeId, ":", data?.length);
-  return (data ?? []).map(mapRow);
+  console.log("[InjuryStore] Fetched for", employeeId, ":", data.length);
+  return data.map(rowToReport);
 }
 
 export async function addInjuryReport(
   reportData: Omit<InjuryReport, "id" | "submittedAt" | "status" | "managerNote">
 ): Promise<InjuryReport> {
-  const { data, error } = await supabase
-    .from("injury_reports")
-    .insert({
-      id: `ir-${Date.now()}`,
-      employee_id: reportData.employeeId,
-      incident_date: reportData.incidentDate,
-      location: reportData.location,
-      description: reportData.description,
-      injury_type: reportData.injuryType,
-      medical_status: reportData.medicalStatus,
-      medical_cost: reportData.medicalCost,
-      medical_notes: reportData.medicalNotes,
-      status: "pending",
-      manager_note: "",
-    })
-    .select()
-    .single();
-
+  const id = `inj_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const { data, error } = await supabase.from("injury_reports").insert({
+    id,
+    employee_id: reportData.employeeId,
+    incident_date: reportData.incidentDate,
+    location: reportData.location,
+    description: reportData.description,
+    injury_type: reportData.injuryType,
+    medical_status: reportData.medicalStatus,
+    medical_cost: reportData.medicalCost,
+    medical_notes: reportData.medicalNotes,
+    status: "pending",
+    manager_note: "",
+  }).select().single();
   if (error) throw new Error(error.message);
   console.log("[InjuryStore] Report added:", data);
-  return mapRow(data);
+  return rowToReport(data);
 }
 
 export async function updateInjuryReportStatus(
@@ -99,10 +90,9 @@ export async function updateInjuryReportStatus(
     .eq("id", id)
     .select()
     .single();
-
   if (error) throw new Error(error.message);
   console.log("[InjuryStore] Status updated:", data);
-  return mapRow(data);
+  return rowToReport(data);
 }
 
 export async function deleteInjuryReport(id: string): Promise<void> {

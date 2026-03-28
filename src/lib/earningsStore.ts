@@ -38,31 +38,26 @@ export function freshDenominations(): CashDenomination[] {
   return DENOMINATION_TEMPLATE.map((d) => ({ ...d, count: 0 }));
 }
 
-// ─── Row mapper ───────────────────────────────────────────────────────────────
-
-function mapRow(row: any): EarningsLog {
+function rowToLog(row: any): EarningsLog {
   return {
     id: row.id,
     employeeId: row.employee_id,
     shiftId: row.shift_id,
     submittedAt: row.submitted_at,
-    denominations: row.denominations as CashDenomination[],
-    totalCash: Number(row.total_cash),
+    denominations: Array.isArray(row.denominations) ? row.denominations : JSON.parse(row.denominations ?? "[]"),
+    totalCash: parseFloat(row.total_cash),
     note: row.note ?? "",
-    safeConfirmed: row.safe_confirmed,
+    safeConfirmed: row.safe_confirmed ?? false,
   };
 }
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function getEarningsLogs(): Promise<EarningsLog[]> {
-  const { data, error } = await supabase
-    .from("earnings_logs")
-    .select("*")
-    .order("submitted_at", { ascending: false });
+  const { data, error } = await supabase.from("earnings_logs").select("*").order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Fetched all:", data?.length);
-  return (data ?? []).map(mapRow);
+  console.log("[EarningsStore] Fetched all:", data.length);
+  return data.map(rowToLog);
 }
 
 export async function getMyEarningsLogs(employeeId: string): Promise<EarningsLog[]> {
@@ -72,30 +67,26 @@ export async function getMyEarningsLogs(employeeId: string): Promise<EarningsLog
     .eq("employee_id", employeeId)
     .order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Fetched for", employeeId, ":", data?.length);
-  return (data ?? []).map(mapRow);
+  console.log("[EarningsStore] Fetched for", employeeId, ":", data.length);
+  return data.map(rowToLog);
 }
 
 export async function addEarningsLog(
   logData: Omit<EarningsLog, "id" | "submittedAt">
 ): Promise<EarningsLog> {
-  const { data, error } = await supabase
-    .from("earnings_logs")
-    .insert({
-      id: `el-${Date.now()}`,
-      employee_id: logData.employeeId,
-      shift_id: logData.shiftId,
-      denominations: logData.denominations,
-      total_cash: logData.totalCash,
-      note: logData.note,
-      safe_confirmed: logData.safeConfirmed,
-    })
-    .select()
-    .single();
-
+  const id = `log_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const { data, error } = await supabase.from("earnings_logs").insert({
+    id,
+    employee_id: logData.employeeId,
+    shift_id: logData.shiftId,
+    denominations: logData.denominations,
+    total_cash: logData.totalCash,
+    note: logData.note,
+    safe_confirmed: logData.safeConfirmed,
+  }).select().single();
   if (error) throw new Error(error.message);
   console.log("[EarningsStore] Log added:", data);
-  return mapRow(data);
+  return rowToLog(data);
 }
 
 export async function deleteEarningsLog(id: string): Promise<void> {
