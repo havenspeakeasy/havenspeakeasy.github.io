@@ -5,7 +5,7 @@ import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Login from "@/pages/Login";
-import SetupPage from "@/pages/SetupPage";
+
 import Dashboard from "@/pages/Dashboard";
 import ClockPage from "@/pages/ClockPage";
 import MyShifts from "@/pages/MyShifts";
@@ -73,7 +73,7 @@ function AppRoutes() {
       <Route path="/injury-report" element={<ProtectedRoute><InjuryReport /></ProtectedRoute>} />
       <Route path="/manage-injuries" element={<ManagerRoute><ManageInjuries /></ManagerRoute>} />
       <Route path="/job-titles" element={<ManagerRoute><JobTitles /></ManagerRoute>} />
-      <Route path="/setup" element={<SetupPage />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

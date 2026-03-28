@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+
 import { useNavigate } from "react-router-dom";
 import { login } from "@/lib/store";
 import { useAuth } from "@/context/AuthContext";
@@ -81,9 +81,7 @@ export default function Login() {
         <p className="text-center text-xs mt-6" style={{ color: "var(--cream-muted)" }}>
           Contact management if you've forgotten your credentials.
         </p>
-        <p className="text-center text-xs mt-3">
-          <Link to="/setup" style={{ color: "rgba(201,168,76,0.5)", textDecoration: "none", fontSize: "0.7rem", letterSpacing: "0.05em" }}>⚙ Setup &amp; Diagnostics</Link>
-        </p>
+
       </div>
     </div>
   );

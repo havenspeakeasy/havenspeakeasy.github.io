@@ -42,7 +42,7 @@ function rowToReport(row: any): InjuryReport {
 export async function getInjuryReports(): Promise<InjuryReport[]> {
   const { data, error } = await supabase.from("injury_reports").select("*").order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Fetched all:", data.length);
+
   return data.map(rowToReport);
 }
 
@@ -53,7 +53,7 @@ export async function getMyInjuryReports(employeeId: string): Promise<InjuryRepo
     .eq("employee_id", employeeId)
     .order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Fetched for", employeeId, ":", data.length);
+
   return data.map(rowToReport);
 }
 
@@ -75,7 +75,7 @@ export async function addInjuryReport(
     manager_note: "",
   }).select().single();
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Report added:", data);
+
   return rowToReport(data);
 }
 
@@ -91,12 +91,12 @@ export async function updateInjuryReportStatus(
     .select()
     .single();
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Status updated:", data);
+
   return rowToReport(data);
 }
 
 export async function deleteInjuryReport(id: string): Promise<void> {
   const { error } = await supabase.from("injury_reports").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  console.log("[InjuryStore] Report deleted:", id);
+
 }

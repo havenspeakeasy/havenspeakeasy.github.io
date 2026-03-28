@@ -56,7 +56,7 @@ function rowToLog(row: any): EarningsLog {
 export async function getEarningsLogs(): Promise<EarningsLog[]> {
   const { data, error } = await supabase.from("earnings_logs").select("*").order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Fetched all:", data.length);
+
   return data.map(rowToLog);
 }
 
@@ -67,7 +67,7 @@ export async function getMyEarningsLogs(employeeId: string): Promise<EarningsLog
     .eq("employee_id", employeeId)
     .order("submitted_at", { ascending: false });
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Fetched for", employeeId, ":", data.length);
+
   return data.map(rowToLog);
 }
 
@@ -85,12 +85,12 @@ export async function addEarningsLog(
     safe_confirmed: logData.safeConfirmed,
   }).select().single();
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Log added:", data);
+
   return rowToLog(data);
 }
 
 export async function deleteEarningsLog(id: string): Promise<void> {
   const { error } = await supabase.from("earnings_logs").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  console.log("[EarningsStore] Log deleted:", id);
+
 }

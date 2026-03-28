@@ -9,6 +9,6 @@ const SUPABASE_ANON_KEY =
 const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY as string | undefined;
 const activeKey = serviceRoleKey ?? SUPABASE_ANON_KEY;
 
-console.log("[Supabase] Using key type:", serviceRoleKey ? "service_role" : "anon");
+
 
 export const supabase = createClient(SUPABASE_URL, activeKey);

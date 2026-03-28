@@ -23,7 +23,7 @@ function rowToJobTitle(row: any): JobTitle {
 export async function getJobTitles(): Promise<JobTitle[]> {
   const { data, error } = await supabase.from("job_titles").select("*").order("name");
   if (error) throw new Error(error.message);
-  console.log("[JobTitlesStore] Fetched:", data.length);
+
   return data.map(rowToJobTitle);
 }
 
@@ -37,14 +37,14 @@ export async function addJobTitle(name: string, isAdmin: boolean): Promise<JobTi
     created_at: createdAt,
   }).select().single();
   if (error) throw new Error(error.message);
-  console.log("[JobTitlesStore] Added:", data);
+
   return rowToJobTitle(data);
 }
 
 export async function deleteJobTitle(id: string): Promise<void> {
   const { error } = await supabase.from("job_titles").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  console.log("[JobTitlesStore] Deleted:", id);
+
 }
 
 export async function getJobTitleNames(): Promise<string[]> {
@@ -67,7 +67,7 @@ export async function refreshAdminRoleNamesCache(): Promise<void> {
     return;
   }
   _adminRoleNamesCache = data.map((r: any) => r.name);
-  console.log("[JobTitlesStore] Admin cache refreshed:", _adminRoleNamesCache);
+
 }
 
 // Bootstrap the cache immediately on module load
