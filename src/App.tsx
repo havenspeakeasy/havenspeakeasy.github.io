@@ -16,7 +16,7 @@ import ManageInjuries from "@/pages/ManageInjuries";
 import JobTitles from "@/pages/JobTitles";
 import StockManagement from "@/pages/StockManagement";
 import DebtCollection from "@/pages/DebtCollection";
-import BannedPlayers from "@/pages/BannedPlayers";
+import BannedIndividuals from "@/pages/BannedIndividuals";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,7 +87,7 @@ function AppRoutes() {
       <Route path="/job-titles" element={<ManagerRoute><JobTitles /></ManagerRoute>} />
       <Route path="/stock" element={<ManagerRoute><StockManagement /></ManagerRoute>} />
       <Route path="/debt-collection" element={<CollectorRoute><DebtCollection /></CollectorRoute>} />
-      <Route path="/banned-players" element={<ProtectedRoute><BannedPlayers /></ProtectedRoute>} />
+      <Route path="/banned-individuals" element={<ProtectedRoute><BannedIndividuals /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

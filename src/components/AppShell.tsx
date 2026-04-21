@@ -18,7 +18,7 @@ const navItems = [
   { to: "/job-titles", label: "Job Titles", icon: Briefcase, ownerOnly: true, managerOnly: false },
   { to: "/stock", label: "Stock Management", icon: Package, ownerOnly: true, managerOnly: false },
   { to: "/debt-collection", icon: DollarSign, label: "Debt Collection", collectorOnly: true },
-  { to: "/banned-players", icon: Ban, label: "Banned Players", adminOnly: false },
+  { to: "/banned-individuals", icon: Ban, label: "Banned Individuals", adminOnly: false },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
