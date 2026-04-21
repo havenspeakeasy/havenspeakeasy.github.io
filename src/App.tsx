@@ -15,6 +15,8 @@ import InjuryReport from "@/pages/InjuryReport";
 import ManageInjuries from "@/pages/ManageInjuries";
 import JobTitles from "@/pages/JobTitles";
 import StockManagement from "@/pages/StockManagement";
+import DebtCollection from "@/pages/DebtCollection";
+import BannedPlayers from "@/pages/BannedPlayers";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,15 @@ function ManagerRoute({ children }: { children: React.ReactNode }) {
   if (isRestoring) return <AppLoader />;
   if (!user) return <Navigate to="/" replace />;
   if (!isOwnerOrManager) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+function CollectorRoute({ children }: { children: React.ReactNode }) {
+  const { user, isOwnerOrManager, isRestoring } = useAuth();
+  if (isRestoring) return <AppLoader />;
+  if (!user) return <Navigate to="/" replace />;
+  // Allow Owner, Manager, or Collector role
+  if (!isOwnerOrManager && user.role !== "Collector") return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -75,6 +86,8 @@ function AppRoutes() {
       <Route path="/manage-injuries" element={<ManagerRoute><ManageInjuries /></ManagerRoute>} />
       <Route path="/job-titles" element={<ManagerRoute><JobTitles /></ManagerRoute>} />
       <Route path="/stock" element={<ManagerRoute><StockManagement /></ManagerRoute>} />
+      <Route path="/debt-collection" element={<CollectorRoute><DebtCollection /></CollectorRoute>} />
+      <Route path="/banned-players" element={<ProtectedRoute><BannedPlayers /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

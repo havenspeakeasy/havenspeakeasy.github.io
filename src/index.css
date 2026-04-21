@@ -2157,3 +2157,329 @@
 .clock-out-choice-none:hover { background: rgba(255,255,255,0.05); border-color: rgba(100,116,139,0.6); color: var(--cream); }
 .clock-out-choice-label { font-size: 0.85rem; font-weight: 700; color: inherit; }
 .clock-out-choice-sub { font-size: 0.72rem; color: var(--cream-muted); line-height: 1.4; }
+
+/* ─── Debt Collection ──────────────────────────────────────────────────── */
+
+.debt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.debt-card {
+  background: var(--dark-800);
+  border: 1px solid var(--dark-700);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.debt-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.1);
+}
+
+.debt-card-overdue {
+  border-color: var(--error);
+  background: linear-gradient(135deg, var(--dark-800) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.debt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--dark-700);
+}
+
+.debt-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--cream);
+  font-family: Georgia, serif;
+}
+
+.debt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.debt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.debt-row-total {
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--dark-700);
+}
+
+.debt-label {
+  color: var(--cream-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.debt-value {
+  color: var(--cream);
+  font-weight: 500;
+}
+
+.debt-value-large {
+  color: var(--gold);
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: Georgia, serif;
+}
+
+.debt-note {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--dark-900);
+  border-left: 3px solid var(--gold);
+  font-size: 0.85rem;
+  color: var(--cream-muted);
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+.debt-meta {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--dark-700);
+  font-size: 0.75rem;
+  color: var(--cream-muted);
+  font-style: italic;
+}
+
+.debt-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dark-700);
+  flex-wrap: wrap;
+}
+
+.badge-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: rgb(96, 165, 250);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* ─── Banned Players ───────────────────────────────────────────────────── */
+
+.banned-alert {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  color: rgb(252, 165, 165);
+}
+
+.banned-alert-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: rgb(248, 113, 113);
+}
+
+.banned-alert-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--cream-muted);
+}
+
+.banned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.banned-card {
+  background: var(--dark-800);
+  border: 2px solid var(--error);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.banned-card:hover {
+  border-color: rgb(248, 113, 113);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+}
+
+.banned-photo-wrap {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: var(--dark-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.banned-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banned-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--cream-muted);
+}
+
+.banned-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--error);
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.banned-info {
+  padding: 1.5rem;
+}
+
+.banned-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cream);
+  font-family: Georgia, serif;
+  margin-bottom: 1rem;
+}
+
+.banned-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.banned-reason-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cream-muted);
+  font-weight: 600;
+}
+
+.banned-reason-text {
+  font-size: 0.95rem;
+  color: rgb(252, 165, 165);
+  font-weight: 500;
+}
+
+.banned-notes {
+  padding: 0.75rem;
+  background: var(--dark-900);
+  border-left: 3px solid var(--error);
+  font-size: 0.85rem;
+  color: var(--cream-muted);
+  border-radius: 4px;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.banned-meta {
+  font-size: 0.75rem;
+  color: var(--cream-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.banned-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dark-700);
+}
+
+/* ─── Photo Upload ─────────────────────────────────────────────────────── */
+
+.photo-upload-area {
+  width: 100%;
+  min-height: 200px;
+}
+
+.photo-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed var(--dark-600);
+  border-radius: var(--radius);
+  background: var(--dark-900);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--cream-muted);
+}
+
+.photo-upload-label:hover {
+  border-color: var(--gold);
+  background: var(--dark-800);
+  color: var(--gold);
+}
+
+.photo-preview-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.photo-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--error);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.photo-remove-btn:hover {
+  background: rgb(220, 38, 38);
+  transform: scale(1.1);
+}
+
+/* ─── End of Banned Players ────────────────────────────────────────────── */
