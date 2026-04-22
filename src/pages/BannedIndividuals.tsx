@@ -91,10 +91,15 @@ export default function BannedIndividuals() {
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
-    await deleteBannedIndividual(confirmDelete);
-    setConfirmDelete(null);
-    qc.invalidateQueries({ queryKey: ["banned-individuals"] });
-    toast.success("Entry removed from ban list.");
+    try {
+      await deleteBannedIndividual(confirmDelete);
+      setConfirmDelete(null);
+      qc.invalidateQueries({ queryKey: ["banned-individuals"] });
+      toast.success("Entry removed from ban list.");
+    } catch (error: any) {
+      console.error("Error deleting banned individual:", error);
+      toast.error(error.message || "Failed to remove individual from ban list.");
+    }
   };
 
   const openEdit = (individual: any) => {
