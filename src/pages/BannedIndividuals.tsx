@@ -62,17 +62,23 @@ export default function BannedIndividuals() {
       toast.error("Please fill all required fields.");
       return;
     }
-    await addBannedIndividual({
-      individualName: form.individualName,
-      photoUrl: form.photoUrl,
-      banReason: form.banReason,
-      notes: form.notes,
-      bannedBy: user.id,
-    });
-    toast.success("Individual added to ban list.");
-    qc.invalidateQueries({ queryKey: ["banned-individuals"] });
-    setShowAddModal(false);
-    setForm(emptyForm());
+    try {
+      console.log('[BannedIndividuals] Adding individual with form data:', form);
+      await addBannedIndividual({
+        individualName: form.individualName,
+        photoUrl: form.photoUrl,
+        banReason: form.banReason,
+        notes: form.notes,
+        bannedBy: user.id,
+      });
+      toast.success("Individual added to ban list.");
+      qc.invalidateQueries({ queryKey: ["banned-individuals"] });
+      setShowAddModal(false);
+      setForm(emptyForm());
+    } catch (error: any) {
+      console.error('[BannedIndividuals] Error adding individual:', error);
+      toast.error(error.message || "Failed to add individual to ban list.");
+    }
   };
 
   const handleEdit = async () => {
@@ -80,13 +86,18 @@ export default function BannedIndividuals() {
       toast.error("Please fill all required fields.");
       return;
     }
-    const { individualName, photoUrl, banReason, notes } = form;
-    await updateBannedIndividual(editingPlayer, { individualName: individualName, photoUrl, banReason, notes });
-    qc.invalidateQueries({ queryKey: ["banned-individuals"] });
-    toast.success("Banned individual updated successfully.");
-    setShowEditModal(false);
-    setEditingPlayer(null);
-    setForm(emptyForm());
+    try {
+      const { individualName, photoUrl, banReason, notes } = form;
+      await updateBannedIndividual(editingPlayer, { individualName: individualName, photoUrl, banReason, notes });
+      qc.invalidateQueries({ queryKey: ["banned-individuals"] });
+      toast.success("Banned individual updated successfully.");
+      setShowEditModal(false);
+      setEditingPlayer(null);
+      setForm(emptyForm());
+    } catch (error: any) {
+      console.error('[BannedIndividuals] Error updating individual:', error);
+      toast.error(error.message || "Failed to update individual.");
+    }
   };
 
   const handleDelete = async () => {

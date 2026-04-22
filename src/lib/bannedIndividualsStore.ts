@@ -15,7 +15,7 @@ export interface BannedIndividual {
 function rowToBannedIndividual(row: any): BannedIndividual {
   return {
     id: row.id,
-    individualName: row.individual_name,
+    individualName: row.player_name,
     photoUrl: row.photo_url,
     banReason: row.ban_reason ?? "",
     bannedBy: row.banned_by,
@@ -40,11 +40,12 @@ export async function addBannedIndividual(
   individualData: Omit<BannedIndividual, "id" | "bannedAt">
 ): Promise<BannedIndividual> {
   const id = `banned_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  console.log('[addBannedIndividual] Attempting to add:', individualData);
   const { data, error } = await supabase
     .from("banned_players")
     .insert({
       id,
-      individual_name: individualData.individualName,
+      player_name: individualData.individualName,
       photo_url: individualData.photoUrl,
       ban_reason: individualData.banReason,
       banned_by: individualData.bannedBy,
@@ -52,7 +53,11 @@ export async function addBannedIndividual(
     })
     .select()
     .single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('[addBannedIndividual] Error:', error);
+    throw new Error(error.message);
+  }
+  console.log('[addBannedIndividual] Success:', data);
 
   return rowToBannedIndividual(data);
 }
@@ -62,7 +67,7 @@ export async function updateBannedIndividual(
   updates: Partial<Omit<BannedIndividual, "id" | "bannedAt" | "bannedBy">>
 ): Promise<BannedIndividual> {
   const payload: any = {};
-  if (updates.individualName !== undefined) payload.individual_name = updates.individualName;
+  if (updates.individualName !== undefined) payload.player_name = updates.individualName;
   if (updates.photoUrl !== undefined) payload.photo_url = updates.photoUrl;
   if (updates.banReason !== undefined) payload.ban_reason = updates.banReason;
   if (updates.notes !== undefined) payload.notes = updates.notes;
