@@ -1,14 +1,15 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
-  LayoutDashboard, Users, Clock, ClipboardList, Package,
-  LogOut, Wine, ChevronRight, AlertTriangle, Briefcase, DollarSign, Ban
+  LayoutDashboard, Users, Clock, ClipboardList, Package, TrendingUp,
+  AlertTriangle, Briefcase, DollarSign, Ban, Wine, ChevronRight, LogOut, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false, managerOnly: false },
+  { to: "/notices", label: "Notices & Scheduling", icon: Bell, ownerOnly: false, managerOnly: false },
   { to: "/clock", label: "Clock In/Out", icon: Clock, ownerOnly: false, managerOnly: false },
   { to: "/shifts", label: "My Shifts", icon: ClipboardList, ownerOnly: false, managerOnly: false },
   { to: "/injury-report", label: "My Injury Reports", icon: AlertTriangle, ownerOnly: false, managerOnly: false, hideForManager: true },
@@ -17,6 +18,7 @@ const navItems = [
   { to: "/manage-injuries", label: "Injury Reports", icon: AlertTriangle, ownerOnly: true, managerOnly: false },
   { to: "/job-titles", label: "Job Titles", icon: Briefcase, ownerOnly: true, managerOnly: false },
   { to: "/stock", label: "Stock Management", icon: Package, ownerOnly: true, managerOnly: false },
+  { to: "/employee-stats", label: "Employee Stats", icon: TrendingUp, ownerOnly: true, managerOnly: false },
   { to: "/debt-collection", icon: DollarSign, label: "Debt Collection", collectorOnly: true },
   { to: "/banned-individuals", icon: Ban, label: "Banned Individuals", adminOnly: false },
 ];

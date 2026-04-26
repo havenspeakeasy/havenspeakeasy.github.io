@@ -748,6 +748,184 @@
 .payroll-role { font-size: 0.72rem; color: var(--cream-muted); margin-top: 0.1rem; }
 .payroll-amount { font-size: 1rem; font-weight: 700; color: var(--green); }
 
+/* ===== EMPLOYEE STATS ===== */
+.emp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.emp-stat-card {
+  background: var(--dark-700);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.emp-stat-card:hover {
+  background: var(--dark-600);
+  border-color: rgba(201,168,76,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.emp-stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.emp-stat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+.emp-stat-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold-faint);
+  color: var(--gold);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.emp-stat-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cream);
+  line-height: 1.3;
+}
+.emp-stat-role {
+  font-size: 0.75rem;
+  color: var(--cream-muted);
+  margin-top: 0.15rem;
+}
+.emp-stat-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.75rem 0;
+}
+.emp-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.emp-stat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.emp-stat-icon {
+  color: var(--gold);
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+.emp-stat-icon.amber {
+  color: var(--amber);
+}
+.emp-stat-label {
+  font-size: 0.65rem;
+  color: var(--cream-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+.emp-stat-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cream);
+  margin-top: 0.15rem;
+  line-height: 1.2;
+}
+.emp-stat-value-primary {
+  color: var(--green);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.emp-stat-value-amber {
+  color: var(--amber);
+}
+.emp-stat-footer {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--dark-600);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--cream);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 1.5rem;
+}
+.back-btn:hover {
+  background: var(--dark-500);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.emp-detail-header {
+  background: var(--dark-700);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.emp-detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+}
+.emp-detail-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold-faint);
+  color: var(--gold);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+.emp-detail-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 0.25rem;
+}
+.emp-detail-role {
+  font-size: 0.9rem;
+  color: var(--cream-muted);
+  margin-bottom: 0.5rem;
+}
+.emp-detail-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.emp-detail-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  background: var(--dark-600);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: var(--cream-muted);
+  font-weight: 600;
+}
+
 /* ===== MINI STATS ===== */
 .mini-stats-row {
   display: flex;
@@ -1117,6 +1295,198 @@
 }
 
 .injury-manager-note strong { color: var(--gold); }
+
+/* ===== NOTICES & SCHEDULING ===== */
+.notices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.notice-card {
+  background: var(--dark-700);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.notice-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.notice-card-high {
+  border-left: 3px solid var(--amber);
+}
+
+.notice-card-urgent {
+  border-left: 3px solid var(--red);
+  background: rgba(212, 101, 90, 0.05);
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.notice-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: var(--gold-faint);
+  color: var(--gold);
+}
+
+.notice-card-high .notice-priority-badge {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.notice-card-urgent .notice-priority-badge {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.notice-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.notice-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin: 0 0 0.5rem 0;
+}
+
+.notice-content {
+  font-size: 0.875rem;
+  color: var(--cream);
+  line-height: 1.5;
+  margin: 0 0 0.875rem 0;
+}
+
+.notice-footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.notice-meta {
+  font-size: 0.7rem;
+  color: var(--cream-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.schedule-card {
+  background: var(--dark-700);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.schedule-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.schedule-date {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 0.625rem;
+}
+
+.schedule-times {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--cream);
+  margin-bottom: 0.5rem;
+}
+
+.schedule-notes {
+  font-size: 0.8rem;
+  color: var(--cream-muted);
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+.schedule-actions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.schedule-card:hover .schedule-actions {
+  opacity: 1;
+}
+
+.priority-toggle-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priority-toggle-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--dark-600);
+  color: var(--cream-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.priority-toggle-btn:hover {
+  background: var(--dark-500);
+  border-color: var(--gold);
+}
+
+.priority-toggle-active {
+  background: var(--gold-faint);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--cream-muted);
+  background: var(--dark-700);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
 
 .injury-medical-notes {
   display: flex;

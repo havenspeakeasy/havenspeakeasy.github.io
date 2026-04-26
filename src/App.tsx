@@ -17,6 +17,8 @@ import JobTitles from "@/pages/JobTitles";
 import StockManagement from "@/pages/StockManagement";
 import DebtCollection from "@/pages/DebtCollection";
 import BannedIndividuals from "@/pages/BannedIndividuals";
+import NoticesAndScheduling from "@/pages/NoticesAndScheduling";
+import EmployeeStats from "@/pages/EmployeeStats";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +90,8 @@ function AppRoutes() {
       <Route path="/stock" element={<ManagerRoute><StockManagement /></ManagerRoute>} />
       <Route path="/debt-collection" element={<CollectorRoute><DebtCollection /></CollectorRoute>} />
       <Route path="/banned-individuals" element={<ProtectedRoute><BannedIndividuals /></ProtectedRoute>} />
+      <Route path="/notices" element={<ProtectedRoute><NoticesAndScheduling /></ProtectedRoute>} />
+      <Route path="/employee-stats" element={<ManagerRoute><EmployeeStats /></ManagerRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
