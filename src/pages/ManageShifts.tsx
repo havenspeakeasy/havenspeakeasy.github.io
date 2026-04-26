@@ -11,7 +11,10 @@ type FilterType = "all" | "pending" | "approved" | "declined";
 function getWeekStart() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay());
+  // Calculate days since Monday (0 = Monday, 6 = Sunday)
+  const dayOfWeek = d.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  d.setDate(d.getDate() - daysSinceMonday);
   return d;
 }
 
